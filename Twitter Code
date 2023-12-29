@@ -1,6 +1,10 @@
 install.packages("academictwitteR")
+install.packages("tidyverse")
 library(academictwitteR)
 library(jsonlite)
+library(tidyverse)
+library(dplyr)
+library(stringr)
 
 
 # Set bearer token. This is the one copied from the Developer Academic twitter portal
@@ -25,8 +29,6 @@ Users_Data_Antonine_Wall <- get_user_profile(Users_List_Antonine_Wall, bearer_to
 
 #Merging these with tweet dataframes
 #First, rename several columns in User_Data frames that have the same name as tweet data, but refer to different things, and to allow for merging.
-install.packages("tidyverse")
-library(tidyverse)
 Users_Data_Antonine_Wall_Joinable <- Users_Data_Antonine_Wall %>%
 rename(author_id = id)
 Users_Data_Antonine_Wall_Joinable <- Users_Data_Antonine_Wall_Joinable %>%
@@ -35,16 +37,8 @@ rename(account_created = created_at)
 CombData_Antonine_Wall <- full_join(Data_Antonine_Wall, Users_Data_Antonine_Wall_Joinable, by = 'author_id')
 CombData_Antonine_Wall <- CombData_Antonine_Wall[!duplicated(CombData_Antonine_Wall$id),]
 
-#Save data
-saveRDS(CombData_Antonine_Wall, file = "CombData_Antonine_Wall.RDS")
-
 #Write as json
-CombData_Antonine_Wall <- toJSON(CombData_Antonine_Wall, pretty = TRUE)
-
-write(CombData_Antonine_Wall, "D:/Users/Alexander Hiscock/Documents/Archaeology Research/Archaeology/PhD\Thesis (Sections, Work, Data)/CODE/DATA/Twitter/Data Collection/FOR COPYING ONLY Twitter. Combined Tweets Master Document/CombData_Antonine_Wall.json")
-
-Twitter_data <- fromJSON("CombData_Antonine_Wall.json")
-library(dplyr)
+Twitter_data <- toJSON(CombData_Antonine_Wall, pretty = TRUE)
 
 #I don't need these columns
 possibly_sensitive
@@ -52,120 +46,50 @@ edit_history_tweet_ids
 protected
 profile_image_url
 
-
 # delete columns
 Twitter_data <- Twitter_data %>% select(-possibly_sensitive, -edit_history_tweet_ids, -protected, -profile_image_url)
-#save
-Twitter_data <- toJSON(Twitter_data, pretty = TRUE)
-write_json(Twitter_data, path = "Twitter_data.json", pretty = TRUE)
 
 
-#saving into smaller files that are more easily handled
-# Calculate the number of rows in each group
-group_size <- 3000
+# add codes
+Twitter_data <- Twitter_data %>% mutate(Code = paste0("TW.", seq_len(nrow(Twitter_data))))
 
-# Create a grouping variable
-group <- ceiling(seq_len(nrow(Twitter_data)) / group_size)
+#Now anonymising data in the following columns
+# add author_codes column
+#author_id - delete
+#name - delete 
+#text  -swap out mentions with 'Mention' to indicate where there would have been one. (add 'Mention' to topic modelling stopwords later)
+#in_reply_to_user_id - delete (I don't need the mentions for this study. Network analysis not required)
+#username - delete
+#entitiesx$mentions - delete
 
-# Split the dataframe into a list of dataframes
-list_of_dfs <- split(Twitter_data, group)
+# Step 1: Identify unique authors
+unique_authors <- unique(Twitter_data$author_id)
 
+# Step 2: Generate a sequence of codes for these authors
+author_codes <- paste0("TW.Auth.", seq_along(unique_authors))
 
+# Step 3: Create a mapping from unique authors to their codes
+author_code_mapping <- setNames(author_codes, unique_authors)
 
-small_df_1 <- toJSON(small_df_1, file = "small_df_1.json", pretty = TRUE, auto_unbox = TRUE)
-write_json(small_df_1 , path = "small_df_1.json", pretty = TRUE)
+# Apply the mapping to create a new column in the dataframe
+Twitter_data$Author_Code <- author_code_mapping[Twitter_data$author_id]
 
-small_df_2 <- toJSON(small_df_2, file = "small_df_2.json", pretty = TRUE, auto_unbox = TRUE)
-write_json(small_df_2 , path = "small_df_2.json", pretty = TRUE)
+#Removing the name column
+Twitter_data <- Twitter_data %>% select(-name)
 
-small_df_3 <- toJSON(small_df_3, file = "small_df_3.json", pretty = TRUE, auto_unbox = TRUE)
-write_json(small_df_3 , path = "small_df_3.json", pretty = TRUE)
+## anonymise mentions in text, repalcing them with "@Mention"
+Twitter_data <- Twitter_data %>%
+  mutate(text = str_replace_all(text, "@\\w+", "@Mention"))
 
-small_df_4 <- toJSON(small_df_4, file = "small_df_4.json", pretty = TRUE, auto_unbox = TRUE)
-write_json(small_df_4 , path = "small_df_4.json", pretty = TRUE)
-
-small_df_5 <- toJSON(small_df_5, file = "small_df_5.json", pretty = TRUE, auto_unbox = TRUE)
-write_json(small_df_5 , path = "small_df_5.json", pretty = TRUE)
-
-small_df_6 <- toJSON(small_df_6, file = "small_df_6.json", pretty = TRUE, auto_unbox = TRUE)
-write_json(small_df_6 , path = "small_df_6.json", pretty = TRUE)
-
-small_df_7 <- toJSON(small_df_7, file = "small_df_7.json", pretty = TRUE, auto_unbox = TRUE)
-write_json(small_df_7 , path = "small_df_7.json", pretty = TRUE)
-
-small_df_8 <- toJSON(small_df_8, file = "small_df_8.json", pretty = TRUE, auto_unbox = TRUE)
-write_json(small_df_8 , path = "small_df_8.json", pretty = TRUE)
-
-small_df_9 <- toJSON(small_df_9, file = "small_df_9.json", pretty = TRUE, auto_unbox = TRUE)
-write_json(small_df_9 , path = "small_df_9.json", pretty = TRUE)
-
-small_df_10 <- toJSON(small_df_10, file = "small_df_10.json", pretty = TRUE, auto_unbox = TRUE)
-write_json(small_df_10 , path = "small_df_10.json", pretty = TRUE)
-
-small_df_11 <- toJSON(small_df_11, file = "small_df_11.json", pretty = TRUE, auto_unbox = TRUE)
-write_json(small_df_11 , path = "small_df_11.json", pretty = TRUE)
-
-small_df_12 <- toJSON(small_df_12, file = "small_df_12.json", pretty = TRUE, auto_unbox = TRUE)
-write_json(small_df_12 , path = "small_df_12.json", pretty = TRUE)
-
-small_df_13 <- toJSON(small_df_13, file = "small_df_13.json", pretty = TRUE, auto_unbox = TRUE)
-write_json(small_df_13 , path = "small_df_13.json", pretty = TRUE)
-
-
-
-
-
-
-
-
-
-
-# Load the jsonlite package
-library(jsonlite)
-
-# Assuming 'Twitter_data' is already loaded and is a data frame
-# Check if 'Twitter_data' is a data frame
-if (!is.data.frame(Twitter_data)) {
-  stop("Twitter_data is not a data frame.")
-}
-
-# Set the number of rows per chunk
-rows_per_chunk <- 3000
-
-# Calculate the number of chunks needed
-num_chunks <- ceiling(nrow(Twitter_data) / rows_per_chunk)
-
-# Split and write each chunk
-for (i in 1:num_chunks) {
-  # Calculate row indices for this chunk
-  start_row <- (i - 1) * rows_per_chunk + 1
-  end_row <- min(i * rows_per_chunk, nrow(Twitter_data))
+Codes_Names_AuthIds  <- cbind(Twitter_data$Author_Code, Twitter_data$username, Twitter_data$author_id)
   
-  # Extract the chunk
-  chunk <- Twitter_data[start_row:end_row, ]
-  
-  # Generate a unique filename for each chunk
-  file_name <- sprintf("Twitter_data_chunk_%03d.json", i)
-  
-  # Write the chunk to the new JSON file
-  toJSON(chunk, file = file_name, pretty = TRUE, auto_unbox = TRUE)
-  
-  # Print the filename for debugging
-  print(paste("Created file:", file_name))
-}
 
-# Print completion message
-cat("Splitting completed into", num_chunks, "files.")
+# deleting all spare columns
+Twitter_data <- Twitter_data %>% select(-entities.x, -author_id , -name, -in_reply_to_user_id, -username)
 
-# List of Twitter data chunk names
-twitter_data_chunks <- c("Twitter_Data_1", "Twitter_Data_2", "Twitter_Data_3", 
-                         "Twitter_Data_4", "Twitter_Data_5", "Twitter_Data_6", 
-                         "Twitter_Data_7", "Twitter_Data_8", "Twitter_Data_9", 
-                         "Twitter_Data_10", "Twitter_Data_11", "Twitter_Data_12", 
-                         "Twitter_Data_13")
+#save and to database
+write(Twitter_data, path = "Twitter_data.json", pretty = TRUE)
 
-# Iterate over each chunk and write to a separate JSON file
-for(chunk in twitter_data_chunks) {
-  chunk_path <- paste0(chunk, ".json")
-  write_json(get(chunk), path = chunk_path, pretty = TRUE)
-}
+conn <- mongo(collection = "Twitter_Anon", url = "mongodb://localhost:27017/Antonine_Wall_Value_Assemblages")
+
+conn$insert(Twitter_data)
