@@ -1,0 +1,47 @@
+# Code to retrieve Posts and Comments from Reddit API.
+install.packages("RedditExtractoR")
+
+
+# Reddit API credentials
+client_id <- "---"
+client_secret <- "---"
+
+# Authenticate with Reddit API
+reddit_oauth <- redditOAuth(app_id = client_id, app_secret = client_secret, user_agent = "YOUR_USER_AGENT")
+
+
+# Load the RedditExtractoR package
+library(RedditExtractoR)
+
+# Define the search terms
+search_terms <- c("Antonine Wall")
+
+# Perform the search
+posts <- get_reddit(search_terms = search_terms,
+                      sort_by = "new",
+                      page_threshold = 500,
+                      token = reddit_oauth)
+
+# Initialize a list to store comments data frames
+comments_list <- list()
+
+
+# Check if there are any posts
+if (nrow(posts) > 0) {
+    # Add a new column for comments
+    posts$comments <- vector("list", length = nrow(posts))
+
+    # Iterate over each post URL and fetch comments
+    for (i in 1:nrow(posts)) {
+        post_url <- posts$url[i]
+        comments <- get_reddit_comments(post_url = post_url, token = reddit_oauth)
+
+        # Add comments to the corresponding post in the data frame
+        posts$comments[[i]] <- comments
+    }
+} else {
+    print("No posts")
+}
+
+Reddit_Data <- toJSON(posts, pretty = TRUE)
+write_json(Reddit_Data, path = "Reddit_Data.json", pretty = TRUE)
