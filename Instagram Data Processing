@@ -1,4 +1,5 @@
-# Files were scraped using apify scraper and saved into directory.
+# Files were scraped using apify scraper and saved into directory. All posts with #antoninewall were scraped, including comments
+#All profile data from the authors of these posts was also scraped
 library(dplyr)
 library(jsonlite)
 
@@ -12,7 +13,7 @@ Comments <- fromJSON("dataset_instagram-comment-scraper_2023-12-23_21-25-07-196.
 Posts <- Posts %>% 
   distinct(url, .keep_all = TRUE)
 
-#Remove Posts columns of data we don't need. These are:
+#Remove Posts columns we don't need. These are:
 ##inputUrl
 ##type
 ##firstComment
@@ -38,10 +39,7 @@ Posts <- Posts %>%
 Comments <- Comments %>% 
   select(-ownerProfilePicUrl)
 
-
-#Now I need to somehow, add into the json, under each entry, a comment for each, in a nested list
-
-
+# Grouping Comments in lists and attaching to posts
 # Ensure that the URLs are in the same format before merging
 Comments$postUrl <- as.character(Comments$postUrl)
 Posts$url <- as.character(Posts$url)
@@ -62,7 +60,8 @@ Profiles4 <- fromJSON("dataset_instagram-profile-scraper_2023-12-14_16-03-27-292
 
 # Merge the dataframes
 Profiles <- rbind(Profiles1, Profiles2, Profiles3, Profiles4)
-#Remove Comments columns we don't need. these are:
+
+#Remove Profile columns we don't need. these are:
 ##externalUrlShimmed
 ##hasChannel
 ##joinedRecently
@@ -87,7 +86,7 @@ Posts__With_Comments_and_Profiles <- Posts__With_Comments_and_Profiles %>% disti
 write_json(Posts__With_Comments_and_Profiles, path = "Instagram_Data_Clean.json", pretty = TRUE)
 
 
-#codes and anonymisation were completed in python
+# adding codes and anonymisation were completed in python
 import json
 
 # Load the JSON file
@@ -107,8 +106,8 @@ for i, item in enumerate(data):
             comment['CommentCode'] = f'{item["Code"]}.{j + 1}'
 
 # Save the modified data back to the file
-modified_file_path = '/mnt/data/Instagram_Data_Modified.json'
+modified_file_path = 'Instagram_Data_Modified.json'
 with open(modified_file_path, 'w') as file:
     json.dump(data, file, indent=4)
 
-
+#data was then manually uploaded to mongodb
