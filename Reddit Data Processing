@@ -1,6 +1,7 @@
 # Code to retrieve Posts and Comments from Reddit API.
+# Load the RedditExtractoR package
 install.packages("RedditExtractoR")
-
+library(RedditExtractoR)
 
 # Reddit API credentials
 client_id <- "---"
@@ -8,10 +9,6 @@ client_secret <- "---"
 
 # Authenticate with Reddit API
 reddit_oauth <- redditOAuth(app_id = client_id, app_secret = client_secret, user_agent = "YOUR_USER_AGENT")
-
-
-# Load the RedditExtractoR package
-library(RedditExtractoR)
 
 # Define the search terms
 search_terms <- c("Antonine Wall")
@@ -22,7 +19,7 @@ posts <- get_reddit(search_terms = search_terms,
                       page_threshold = 500,
                       token = reddit_oauth)
 
-# Initialize a list to store comments data frames
+# Initialise a list to store comments data frames
 comments_list <- list()
 
 
