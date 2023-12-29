@@ -1,0 +1,88 @@
+#Code for Extracting all YouTube Videos, Metadata, and Comment Threads containing
+#key words related to the Antonine Wall and Roman Scotland
+# There are Four Sections to this code:
+# SECTION A: Extraction of Video Data 
+# SECTION B: Extraction of Video Statistics
+# SECTION C: Exraction of Video Comments
+# SECTION D: Collating the above
+
+#Section A
+#Install Packages, set Authkey
+install.packages("tuber")
+library(tuber)
+
+#set Authkey
+
+yt_oauth("1043272008101-8s368d6a9b52869v8bb90vq8q6d2ghir.apps.googleusercontent.com","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", scope = "ssl")
+
+Antonine_Wall <-yt_search("Antonine Wall", published_after = "2005-02-14T00:00:00Z", published_before = "2022-11-09T00:00:00Z")
+
+saveRDS(Antonine_Wall, file = "Youtube_Antonine_Wall.RDS") 
+
+#Section B
+VidIDsAntonineWall <- data.frame(Youtube_Antonine_Wall$video_id)
+VidIDsAntonineWallList <- Youtube_Antonine_Wall$video_id
+
+# Initialize an empty dataframe to store the stats
+AntoninWallVidStats <- data.frame()
+
+# Loop through each video ID and get stats
+for (video_id in VidIDsAntonineWallList) {
+  stats <- get_stats(video_id = video_id)
+  # get_stats returns a dataframe, append it to the existing dataframe
+  AntoninWallVidStats <- rbind(AntoninWallVidStats, stats)
+}
+
+##Then make it Joinable
+AntoninWallVidStats <- AntoninWallVidStats %>%
+rename(video_id = id)
+
+Stats <- toJSON(AntoninWallVidStats, pretty = TRUE)
+write(Stats, "Stats.json")
+
+
+#Section C
+# Initialize an empty dataframe to store the comments for each video
+AllComments <- data.frame()
+for (video_id in VidIDsAntonineWallList) {
+  comments <- get_all_comments(video_id = video_id)
+  # Add a column for video ID to the comments dataframe
+  comments$VideoID <- video_id
+
+
+
+# Combine the comments with the main dataframe
+  AllComments <- rbind(AllComments, comments)
+}
+Comments <- toJSON(AllComments, pretty = TRUE)
+write(Comments, "Comments.json")
+
+
+# combining
+comments_json <- fromJSON("Comments.json")
+stats_json <- fromJSON("Stats.json")
+videos_json <- fromJSON("Youtube_Antonine_Wall.json")
+
+comments_json$videoId <- as.character(comments_json$videoId)
+videos_json$video_id <- as.character(videos_json$video_id)
+
+videos_with_comments <- videos_json %>%
+  mutate(
+    comments = lapply(video_id, function(v_id) {
+      comments_subset <- subset(comments_json, videoId == v_id)
+      if (nrow(comments_subset) > 0) {
+        comments_subset[, c("id", "textDisplay", "authorDisplayName", "authorProfileImageUrl", "likeCount", "publishedAt")]
+      } else {
+        data.frame()
+      }
+    })
+  )
+  
+  
+  stats_json$id <- as.character(stats_json$id)
+
+videos_with_comments_and_stats <- left_join(videos_with_comments, stats_json, by = c("video_id" = "id"))
+
+
+final_json <- toJSON(videos_with_comments_and_stats, pretty = TRUE)
+write(final_json, "Youtube_data.json")
