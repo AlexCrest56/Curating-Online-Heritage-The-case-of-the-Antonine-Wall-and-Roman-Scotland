@@ -8,7 +8,7 @@ library(tuber)
 
 #set Authkey
 
-yt_oauth("1043272008101-8s368d6a9b52869v8bb90vq8q6d2ghir.apps.googleusercontent.com","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", scope = "ssl")
+yt_oauth("---","---", scope = "ssl")
 
 Antonine_Wall <-yt_search("Antonine Wall", published_after = "2005-02-14T00:00:00Z", published_before = "2022-11-09T00:00:00Z")
 
