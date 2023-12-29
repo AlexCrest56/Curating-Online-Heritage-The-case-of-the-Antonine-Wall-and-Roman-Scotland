@@ -1,7 +1,5 @@
 #TikTok Data processing. 
 
-###Try again from the morning
-
 library(dplyr)
 library(jsonlite)
 library(tidyr)
@@ -31,50 +29,61 @@ grouped_comments <- Comments %>%
 
 Posts <- read_excel("Posts.xlsx")
 write_json(Posts, "Posts.json", pretty = TRUE)
-  
-  
-  # Modify the Code column in both Comments and Posts
-Comments$Code <- gsub("(TT)([0-9]+)", "\\1.\\2", Comments$Code)
-Posts$Code <- gsub("(TT)([0-9]+)", "\\1.\\2", Posts$Code)
 
   
-
-# Inserting a dot between 'TT' and the numerical value in the 'Code' column
-combined_data$Code <- gsub("(TT)([0-9]+)", "\\1.\\2", combined_data$Code)
-
 # Inserting a dot between 'TT' and the numerical value in the 'Code' column
 grouped_comments$video_code <- gsub("(TT)([0-9]+)", "\\1.\\2", grouped_comments$video_code)
 
 combined_data <- left_join(Posts, grouped_comments, by = c("Code" = "video_code"))
+# Inserting a dot between 'TT' and the numerical value in the 'Code' column
+combined_data$Code <- gsub("(TT)([0-9]+)", "\\1.\\2", combined_data$Code)
 
 #back to json
 TikTok_Data <- toJSON(combined_data, pretty = TRUE)
-write_json(TikTok_Data, path = "TikTok_Data.json", pretty = TRUE)
+write(TikTok_Data, path = "TikTok_Data.json", pretty = TRUE)
 
 
-#Json is ugly and unreadable, need to fix. need to remove all backslashes
-## chatgpt to do this in python:
-# To remove all backslashes from the content, we'll modify the cleaning function accordingly.
-
-def remove_all_backslashes(input_string):
-    # Removing all backslashes
-    return input_string.replace('\\', '')
-
-# Clean the content by removing all backslashes
-completely_cleaned_content = remove_all_backslashes(new_raw_content)
-
-# Writing the completely cleaned content to a new file
-completely_cleaned_output_file_path = '/mnt/data/Completely_Cleaned_TikTok_Data.json'
-with open(completely_cleaned_output_file_path, 'w') as file:
-    file.write(completely_cleaned_content)
-
-completely_cleaned_output_file_path
-
-#Then manually reviewed json, and preaned any extra errors. reloading into R to check
-json_data <- fromJSON("Completely_Cleaned_TikTok_Data.json")
-#it is clean
 #Note. The codes for each emoji have been left in. These will turn up in the topic modelling, but will be considered when conducting this. For now they have been left in
 
 
+# data then anonymised in python 
+import json
 
+# Load the JSON file
+file_path = 'TikTok_Data.json'
 
+with open(file_path, 'r') as file:
+    data = json.load(file)
+
+# Creating a dictionary to map old usernames to new ones
+username_map = {}
+auth_count = 1  # Counter for generating new usernames
+
+# Function to get or create a new username
+def get_new_username(old_username, username_map, auth_count):
+    if old_username not in username_map:
+        new_username = f"TT.Auth.{auth_count}"
+        username_map[old_username] = new_username
+        auth_count += 1
+    return username_map[old_username], auth_count
+
+# Iterating over the data to replace usernames
+for entry in data:
+    # Replace 'Username'
+    if 'Username' in entry:
+        old_username = entry['Username']
+        entry['Username'], auth_count = get_new_username(old_username, username_map, auth_count)
+    
+    # Replace 'User' in 'comments'
+    if 'comments' in entry:
+        for comment in entry['comments']:
+            if 'User' in comment:
+                old_username = comment['User']
+                comment['User'], auth_count = get_new_username(old_username, username_map, auth_count)
+
+# Saving the modified data back to a JSON file
+updated_file_path = 'Updated_TikTok_Data.json'
+with open(updated_file_path, 'w') as file:
+    json.dump(data, file, indent=4)
+
+Data then manually uploaded to mongo db
