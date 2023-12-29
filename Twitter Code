@@ -4,7 +4,7 @@ library(jsonlite)
 
 
 # Set bearer token. This is the one copied from the Developer Academic twitter portal
-bearer_token <-"AAAAAAAAAAAAAAAAAAAAABskRAEAAAAAF4JQUVo%2FTqjlVGBHCOF8a8Jowyc%3DPuUfLzBuFURNLLDiap26HlMPhmFd4FEporX2oC7ejCTZLvSBfm"
+bearer_token <-"---"
 
 
 #Tweets
