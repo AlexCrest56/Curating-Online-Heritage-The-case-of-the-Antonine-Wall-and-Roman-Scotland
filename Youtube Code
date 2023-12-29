@@ -1,5 +1,4 @@
-#Code for Extracting all YouTube Videos, Metadata, and Comment Threads containing
-#key words related to the Antonine Wall and Roman Scotland
+#Code for Extracting all YouTube Videos, Metadata, and Comment Threads containing 'Antonine Wall'
 # There are Four Sections to this code:
 # SECTION A: Extraction of Video Data 
 # SECTION B: Extraction of Video Statistics
@@ -83,6 +82,7 @@ videos_with_comments <- videos_json %>%
 
 videos_with_comments_and_stats <- left_join(videos_with_comments, stats_json, by = c("video_id" = "id"))
 
-
 final_json <- toJSON(videos_with_comments_and_stats, pretty = TRUE)
 write(final_json, "Youtube_data.json")
+
+#Data was manually vetted in and irrelevent rows removed
