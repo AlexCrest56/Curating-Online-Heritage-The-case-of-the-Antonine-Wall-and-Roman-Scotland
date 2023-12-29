@@ -1,0 +1,80 @@
+#TikTok Data processing. 
+
+###Try again from the morning
+
+library(dplyr)
+library(jsonlite)
+library(tidyr)
+
+xlsx_files <- list.files(pattern = "\\.xlsx$")
+file_names <- c(print(xlsx_files))
+file_names[[1]] <- NULL
+
+combined_df <- data.frame()
+
+for (file in file_names) {
+    # Read the current file
+    temp_df <- read_excel(file)
+    
+    combined_df <- rbind(combined_df, temp_df)
+}
+
+Comments <- toJSON(combined_df, pretty = TRUE)
+write(Comments, "Comments.json")
+Comments <- fromJSON("Comments.json", simplifyDataFrame = TRUE)
+Comments$video_code <- gsub("\\..*$", "", Comments$Code)
+
+grouped_comments <- Comments %>%
+  group_by(video_code) %>%
+  summarise(comments = list(data.frame(Code, User, Comment, Date, Likes)))
+
+
+Posts <- read_excel("Posts.xlsx")
+write_json(Posts, "Posts.json", pretty = TRUE)
+  
+  
+  # Modify the Code column in both Comments and Posts
+Comments$Code <- gsub("(TT)([0-9]+)", "\\1.\\2", Comments$Code)
+Posts$Code <- gsub("(TT)([0-9]+)", "\\1.\\2", Posts$Code)
+
+  
+
+# Inserting a dot between 'TT' and the numerical value in the 'Code' column
+combined_data$Code <- gsub("(TT)([0-9]+)", "\\1.\\2", combined_data$Code)
+
+# Inserting a dot between 'TT' and the numerical value in the 'Code' column
+grouped_comments$video_code <- gsub("(TT)([0-9]+)", "\\1.\\2", grouped_comments$video_code)
+
+combined_data <- left_join(Posts, grouped_comments, by = c("Code" = "video_code"))
+
+#back to json
+TikTok_Data <- toJSON(combined_data, pretty = TRUE)
+write_json(TikTok_Data, path = "TikTok_Data.json", pretty = TRUE)
+
+
+#Json is ugly and unreadable, need to fix. need to remove all backslashes
+## chatgpt to do this in python:
+# To remove all backslashes from the content, we'll modify the cleaning function accordingly.
+
+def remove_all_backslashes(input_string):
+    # Removing all backslashes
+    return input_string.replace('\\', '')
+
+# Clean the content by removing all backslashes
+completely_cleaned_content = remove_all_backslashes(new_raw_content)
+
+# Writing the completely cleaned content to a new file
+completely_cleaned_output_file_path = '/mnt/data/Completely_Cleaned_TikTok_Data.json'
+with open(completely_cleaned_output_file_path, 'w') as file:
+    file.write(completely_cleaned_content)
+
+completely_cleaned_output_file_path
+
+#Then manually reviewed json, and preaned any extra errors. reloading into R to check
+json_data <- fromJSON("Completely_Cleaned_TikTok_Data.json")
+#it is clean
+#Note. The codes for each emoji have been left in. These will turn up in the topic modelling, but will be considered when conducting this. For now they have been left in
+
+
+
+
