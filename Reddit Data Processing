@@ -38,7 +38,79 @@ if (nrow(posts) > 0) {
     }
 } else {
     print("No posts")
+
+write_json(posts, path = "Reddit_Data.json", pretty = TRUE)
+
+# adding codes and anonymisation were completed in python
+import json
+
+# Load the JSON file
+file_path = 'Reddit_Data.json'
+
+with open(file_path, 'r') as file:
+    data = json.load(file)
+
+# Iterate through the data and add the 'Code' and 'CommentCode' fields
+for i, item in enumerate(data):
+    # Adding 'Code'
+    item['Code'] = f'R.{i + 1}'
+
+    # Check if 'comments' is a list and add 'CommentCode' to each comment
+    if isinstance(item.get('comments'), list):
+        for j, comment in enumerate(item['comments']):
+            comment['CommentCode'] = f'{item["Code"]}.{j + 1}'
+
+
+# Function to replace usernames in the 'Posted by' column
+def replace_usernames_in_json(file_path):
+
+    # Iterate through the data and replace usernames
+    for i, entry in enumerate(data):
+        if 'Posted by' in entry:
+            entry['Posted by'] = f'R.Auth.{i+1}'
+
+    # Save the modified data back to a file
+    with open(file_path, 'w') as file:
+        json.dump(data, file, indent=4)
+
+    return data
+
+# Run the function on the provided data
+replace_usernames_in_json(file_path)
+
+# reLoad the JSON file
+file_path = 'Reddit_Data.json'
+
+with open(file_path, 'r') as file:
+    data = json.load(file)
+
+
+#Function to replace usernames in comment lists
+def replace_usernames_in_comments_owner(data, comments_key='comments', owner_username_key='ownerUsername'):
+    username_mapping = {}
+    counter = 1
+
+    for item in data:
+        # Process each comment
+        comments = item.get(comments_key, [])
+        for comment in comments:
+            comment_owner_username = comment.get(owner_username_key)
+            if comment_owner_username and comment_owner_username not in username_mapping:
+                username_mapping[comment_owner_username] = f'IG.Auth.{counter}'
+                counter += 1
+            comment[owner_username_key] = username_mapping.get(comment_owner_username)
+
+    return data
+# Apply the function to the data
+final_corrected_data = replace_usernames_in_comments_owner(data)
+
+
+# Save the modified data back to the file
+modified_file_path = 'Reddit_Data_Modified.json'
+with open(modified_file_path, 'w') as file:
+    json.dump(data, file, indent=4)
+
+#data was then manually uploaded to mongodb
 }
 
-Reddit_Data <- toJSON(posts, pretty = TRUE)
-write_json(Reddit_Data, path = "Reddit_Data.json", pretty = TRUE)
+
