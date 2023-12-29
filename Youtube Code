@@ -85,4 +85,65 @@ videos_with_comments_and_stats <- left_join(videos_with_comments, stats_json, by
 final_json <- toJSON(videos_with_comments_and_stats, pretty = TRUE)
 write(final_json, "Youtube_data.json")
 
-#Data was manually vetted in and irrelevent rows removed
+#Data was sybsequently vetted in and irrelevent rows and columns removed
+
+
+#code additions and anonymisation took place in python
+
+#adding code
+import json
+
+# Function to read a JSON file
+def read_json_file(file_path):
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    return data
+
+# Function to add CommentCode within each comment
+def add_comment_codes(json_data):
+    for item in json_data:
+        base_code = item['Code']
+        for i, comment in enumerate(item['comments']):
+            comment['CommentCode'] = f"{base_code}.{i+1}"
+    return json_data
+
+# Function to write JSON data to a file
+def write_json_file(data, file_path):
+    with open(file_path, 'w') as file:
+        json.dump(data, file, indent=4)
+
+file_path = 'YouTube_Data.json'
+modified_file_path = 'Updated_YouTube_Data.json'
+json_data = read_json_file(file_path)
+modified_json_data = add_comment_codes(json_data)
+write_json_file(modified_json_data, modified_file_path)
+
+
+# Anonymising
+for video_list in modified_json_data:
+    for video in video_list:
+        # Replace 'channelTitle' usernames
+        channel_title = video.get('channelTitle', '')
+        if channel_title and channel_title not in username_codes:
+            username_codes[channel_title] = f'YT.Auth.{code_counter}'
+            code_counter += 1
+        video['channelTitle'] = username_codes.get(channel_title, '')
+
+        # Replace 'authorDisplayName' in comments
+        for comment in video.get('comments', []):
+            author_display_name = comment.get('authorDisplayName', '')
+            if author_display_name and author_display_name not in username_codes:
+                username_codes[author_display_name] = f'YT.Auth.{code_counter}'
+                code_counter += 1
+            comment['authorDisplayName'] = username_codes.get(author_display_name, '')
+
+# Save the modified data back to a file
+New_file_path = 'Modified_YouTube_Data.json'
+with open(new_file_path, 'w', encoding='utf-8') as file:
+    json.dump(modified_json_data, file, ensure_ascii=False, indent=4)
+
+new_file_path
+
+# data then uploaded manually to mongodb
+
+
