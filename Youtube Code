@@ -1,11 +1,7 @@
 #Code for Extracting all YouTube Videos, Metadata, and Comment Threads containing 'Antonine Wall'
-# There are Four Sections to this code:
-# SECTION A: Extraction of Video Data 
-# SECTION B: Extraction of Video Statistics
-# SECTION C: Exraction of Video Comments
-# SECTION D: Collating the above
 
-#Section A
+
+
 #Install Packages, set Authkey
 install.packages("tuber")
 library(tuber)
@@ -18,7 +14,7 @@ Antonine_Wall <-yt_search("Antonine Wall", published_after = "2005-02-14T00:00:0
 
 saveRDS(Antonine_Wall, file = "Youtube_Antonine_Wall.RDS") 
 
-#Section B
+
 VidIDsAntonineWall <- data.frame(Youtube_Antonine_Wall$video_id)
 VidIDsAntonineWallList <- Youtube_Antonine_Wall$video_id
 
@@ -40,7 +36,7 @@ Stats <- toJSON(AntoninWallVidStats, pretty = TRUE)
 write(Stats, "Stats.json")
 
 
-#Section C
+
 # Initialize an empty dataframe to store the comments for each video
 AllComments <- data.frame()
 for (video_id in VidIDsAntonineWallList) {
