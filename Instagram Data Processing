@@ -95,15 +95,15 @@ file_path = 'Instagram_Data_Clean.json'
 with open(file_path, 'r') as file:
     data = json.load(file)
 
-# Iterate through the data and add the 'Code' and 'CommentCode' fields
+# Iterate through the data and add the 'Code' and Comment 'Code' fields
 for i, item in enumerate(data):
     # Adding 'Code'
     item['Code'] = f'IG.{i + 1}'
 
-    # Check if 'comments' is a list and add 'CommentCode' to each comment
+    # Check if 'comments' is a list and add 'Code' to each comment
     if isinstance(item.get('comments'), list):
         for j, comment in enumerate(item['comments']):
-            comment['CommentCode'] = f'{item["Code"]}.{j + 1}'
+            comment['Code'] = f'{item["Code"]}.{j + 1}'
 
 # Save the modified data back to the file
 modified_file_path = 'Instagram_Data_Modified.json'
