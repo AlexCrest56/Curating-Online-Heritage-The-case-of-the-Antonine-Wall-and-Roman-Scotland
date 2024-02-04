@@ -95,12 +95,12 @@ def read_json_file(file_path):
         data = json.load(file)
     return data
 
-# Function to add CommentCode within each comment
+# Function to add Code within each comment
 def add_comment_codes(json_data):
     for item in json_data:
         base_code = item['Code']
         for i, comment in enumerate(item['comments']):
-            comment['CommentCode'] = f"{base_code}.{i+1}"
+            comment['Code'] = f"{base_code}.{i+1}"
     return json_data
 
 # Function to write JSON data to a file
