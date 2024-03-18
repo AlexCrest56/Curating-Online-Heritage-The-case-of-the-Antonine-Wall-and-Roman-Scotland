@@ -3,7 +3,8 @@
 #English words were drawn from the opensource List Of English Words, an online activist resource that creates tools to help developers. The word list is crowdsourced and contains over 466k English words. The list is available here:
 https://github.com/dwyl/english-words
 
-#It produces two columns onto any dataframe of text data: one of the number of scots words, and another which lists them seperated by a comma, for manual authentication. 
+#It produces two columns onto any dataframe of text data: one of the number of scots words, and another which lists them seperated by a comma, for manual authentication.
+# It is used here to detect scots phrases and connections in Tweets
 
 # I intend to build this is Python as well
 
