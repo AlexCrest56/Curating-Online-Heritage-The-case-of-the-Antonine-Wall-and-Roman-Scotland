@@ -6,7 +6,7 @@ if __name__ == "__main__":
     #This code is adapted from Bonacchi and Kryzanska (2021). The original script is found here: https://github.com/IARHeritages/HeritageTribalism_BigData/blob/main/codes/mongo/05_02_Topic_assignment.js . I also used this guide https://towardsdatascience.com/topic-modelling-in-python-with-nltk-and-gensim-4ef03213cd21 
     
     ## This code creates the LDA topic model for the unique documents in the Template dataset, for topic numbers n = 2:31,
-    ## It is designed to handle a json file of Text data, that also has a Code column. Their are two code types for this template: type a) TT.1, b) TT.1.1. 
+    ## It is designed to handle a json file of Text data, that also has a Code column. Their are two code types for this template: type a) TT.1, b) TT.1.1.
     ## it calculates the coherence scores for the topic and creates and intertopic-distance visualisation for the model with the highest coherence score, with the LDAvis.
     ## it then also assignes the dominant topic and topic scores to all Text documents utilised, and intergrates these with a master file in a Mongodb database
 
