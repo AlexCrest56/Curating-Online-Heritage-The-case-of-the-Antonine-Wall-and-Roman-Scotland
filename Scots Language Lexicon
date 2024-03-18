@@ -1,0 +1,158 @@
+#This work substantially aplies the dictionary of modern Scots, by Chris Gilmore which itself was compiled using words found on twitter, amongst other sources. (https://www.chrisgilmour.co.uk/scots/)
+
+#English words were drawn from the opensource List Of English Words, an online activist resource that creates tools to help developers. The word list is crowdsourced and contains over 466k English words. The list is available here:
+https://github.com/dwyl/english-words
+
+#It produces two columns onto any dataframe of text data: one of the number of scots words, and another which lists them seperated by a comma, for manual authentication. 
+
+# I intend to build this is Python as well
+
+#making the lexicon and testing it on a sample of 1000 tweets from a topic model
+library(rvest)
+library(stringr)
+library(readr)
+library(jsonlite)
+library(dplyr)
+
+#Loading English Words from environment
+PTS_Twitter <- fromJSON("PTSTwitter.json", flatten = TRUE)
+
+#Loading English Words from environment
+json_data <- fromJSON("words_dictionary.json", flatten = TRUE)
+
+# Convert to a dataframe if it's not already in the desired format
+EnglishWords <- as.data.frame(json_data)
+
+words_vector <- colnames(EnglishWords)
+
+# Create a new dataframe with one column containing all the words
+EnglishWordsDataFrame <- data.frame(Words = words_vector)
+
+# Save the unique matches to a CSV file
+write_csv(EnglishWordsDataFrame, "EnglishWords.csv")
+
+#Loading Scots Words
+scots_words <- read_csv("Scots_Lexicon_Cleaned_and_Filtered_Final.csv")
+EnglishWords <- read_csv("EnglishWords.csv")
+
+
+#First of all, removing all scots words that appear in the English List
+filtered_scots_words <- scots_words %>%
+  anti_join(EnglishWords, by = "Word")
+  
+# Write the filtered list to a new CSV file
+write_csv(filtered_scots_words, "Filtered_Scots_Lexicon.csv")
+
+# For this pilot, some Scots words were included in the English List. These were manually put back in after testing
+
+fae
+Auld
+kirk
+tae
+aff
+Nae
+jist 
+afore
+
+# Gilmore includes many words that are shared with contemporary English. There were removed manually
+podcasts
+next
+apps
+lol
+alot
+nw
+uk
+https
+wordpress
+wordhttps
+else
+chelsea
+heatwave
+ffs
+grrr
+watford
+lego
+meridith
+anglicised
+huggggggggssssss
+huggggggss
+huggggggssssss
+huggggggssss
+huggggggsss
+huggggggsssss
+huggggggss
+grrrrhh
+grrrrrrrr
+grrrroppppischschschz
+nsfw
+gcdnd
+psml
+oooh
+ooohh
+ooooh
+ooohhh
+oooooh
+ooooooh
+oooooooh
+ooooooooh
+dnd
+lowlevel
+firstmisseddndsessionever
+next
+dna
+uk
+wikipedia
+wiki
+else
+youtube
+www
+carpark
+hahahaha
+bc
+texting
+ect
+adhd
+autocorrect
+btw
+vid
+hahaha
+seperate
+tbf
+next
+uk
+organisers
+ebay
+oooh
+finalised
+hmm
+www
+hotspot
+webpages
+wikipedia
+google
+wiki
+curated
+autocorrect
+selfie
+mindset
+else
+
+# Reloading the edited lexicon
+scots_lexicon <- read.csv("Filtered_Scots_Lexicon.csv", stringsAsFactors = FALSE)
+scots_words <- scots_lexicon$Word
+
+###Developing the function
+# pattern
+pattern <- paste0("\\b(", paste(scots_words, collapse = "|"), ")\\b")
+
+# Function to count Scots words in a text using the combined pattern
+count_scots_words_efficient <- function(text, pattern) {
+  sum(stringr::str_count(text, pattern))
+}
+
+# Vectorized version of the function
+count_scots_words_vect <- Vectorize(count_scots_words_efficient, vectorize.args = "text")
+
+PTS_Twitter$ScotsWords <- count_scots_words_vect(PTS_Twitter$Text, pattern)
+# Create a column with a list of Scots words found
+PTS_Twitter$ScotsWordsList <- sapply(stringr::str_extract_all(PTS_Twitter$Text, pattern), function(words) paste(unique(words), collapse=", "))
