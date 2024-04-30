@@ -1,5 +1,12 @@
-# Curating-Online-Heritage-The-case-of-the-Antonine-Wall-and-Roman-Scotland
+The Digital Heritage Toolkit
 
-All personal data has been redacted.
+A toolkit specifically designed to assist in collecting, processing and producing insights from digital heritage data.
 
-The code is made available here for review.
+You will find walk throughs on how to collect data from sources such as social media. There are also scripts for programs for various forms of analyses and guides on how to read them. 
+
+Topics include:
+Transcribing and translating Video and Audio data
+
+Processing Text data
+
+Downloading and Anonymising user profiles and user names in texts.
