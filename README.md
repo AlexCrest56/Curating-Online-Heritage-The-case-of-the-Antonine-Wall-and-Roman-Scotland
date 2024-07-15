@@ -5,8 +5,12 @@ A toolkit specifically designed to assist in collecting, processing and producin
 You will find walk throughs on how to collect data from sources such as social media. There are also scripts for programs for various forms of analyses and guides on how to read them. 
 
 Topics include:
+
 Transcribing and translating Video and Audio data
 
 Processing Text data
 
 Downloading and Anonymising user profiles and user names in texts.
+
+This repository is currently undrconstruction. For any queries, please contact Alex Hiscock @ s2442997@ed.ac.uk
+
