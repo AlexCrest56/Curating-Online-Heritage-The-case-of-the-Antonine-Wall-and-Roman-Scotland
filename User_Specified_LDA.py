@@ -14,6 +14,7 @@ if __name__ == "__main__":
                 #the collection name
                 #the maximum number of topics
                 #any additional stop words, separated by commas
+                #the scale of n-gram used for documents of different lengths, such as for posts, comments, or video transcripts.
                 #the master collection name that the LDA results will be combined with. this requires a Code column that matches the values used in the original collection
                 #the new collection name to save the results:
 
