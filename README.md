@@ -12,9 +12,11 @@ Processing Text data
 
 Downloading and Anonymising user profiles and user names in texts.
 
-This repository is currently undrconstruction. For any queries, please contact Alex Hiscock @ s2442997@ed.ac.uk
+Topic Modelling and Sentiment Analysis
 
-The topics do not cover the extraction or processing of data from Meta properties, Instagram and Facebook. Researchers can apply for access to platform-sepcific tools with the Inter-university Consortium for Political and Social Research (ICPSR) at the University of Michigan. Details are available here: https://transparency.meta.com/en-gb/researchtools/meta-content-library/.Tools such as LDA or sentiment analysis may be copied from this toolkit for use if permissions are recieved. 
+This repository is currently under construction. For any queries, please contact Alex Hiscock @ s2442997@ed.ac.uk with the subject line 'Toolkit Query - '
+
+The topics do not cover the extraction or processing of data from Meta properties, Instagram and Facebook. Researchers can apply for access to these platform-sepcific tools with the Inter-university Consortium for Political and Social Research (ICPSR) at the University of Michigan. Details are available here: https://transparency.meta.com/en-gb/researchtools/meta-content-library/. Tools such as LDA topic model or sentiment analysis may be copied from this toolkit for use in these instances. 
 
 Please cite this repository in all instances: 
 Hiscock, A. (2024). Curating online heritage: The case of the Antonine Wall and Roman Scotland [GitHub repository]. GitHub. https://github.com/AlexHiscock56/Curating-Online-Heritage-The-case-of-the-Antonine-Wall-and-Roman-Scotland
