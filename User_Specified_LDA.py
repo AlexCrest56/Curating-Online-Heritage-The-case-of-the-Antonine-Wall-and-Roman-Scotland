@@ -224,7 +224,7 @@ if __name__ == "__main__":
             print("Invalid input. Defaulting to bigrams.")
             max_n = 2
 
-    # User input for min_count
+    # User input for min_count. User is prompted to set the min count at 0.5% of documents 
     num_docs = len(texts)
     suggested_min_count = max(5, num_docs // 200)
     print(f"There are {num_docs} documents. It is suggested to use a min_count of at least {suggested_min_count}.")
