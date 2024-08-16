@@ -226,7 +226,7 @@ if __name__ == "__main__":
 
     # User input for min_count
     num_docs = len(texts)
-    suggested_min_count = max(5, num_docs // 100)
+    suggested_min_count = max(5, num_docs // 200)
     print(f"There are {num_docs} documents. It is suggested to use a min_count of at least {suggested_min_count}.")
     min_count_input = input(f"Enter a min_count for phrases (suggested: {suggested_min_count}): ").strip()
 
