@@ -45,6 +45,7 @@ if __name__ == "__main__":
     from gensim.models import ldamulticore
     from gensim import models
     from nltk.corpus import stopwords
+    from gensim.models.phrases import Phraser
     import pyLDAvis.gensim
     import gc
     import logging
