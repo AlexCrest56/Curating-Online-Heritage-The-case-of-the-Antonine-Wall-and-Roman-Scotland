@@ -297,8 +297,8 @@ if __name__ == "__main__":
     # List to hold the processed data for each document
     documents_data = []
 
-    # Loop over all documents in the corpus, and assign topic and probabilities to each
-    for i in range(len(corpus)):
+    # Loop over all documents in the data, and assign topic and probabilities to each
+    for i in range(len(data)):
         # Get topic probabilities for the document
         topics = lm.get_document_topics(corpus[i])
         # Reorder topics according to pyLDAvis numbering and convert topic probabilities to float
@@ -310,22 +310,15 @@ if __name__ == "__main__":
         topics_dict['Corpus_dominant_topic'] = max(topics_dict, key=topics_dict.get)
         topics_dict['Corpus_dominant_value'] = float(topics_dict[topics_dict['Corpus_dominant_topic']])
         topics_dict["Code"] = codes[i]
-        topics_dict["text"] = texts[i]
 
         # Add the document's data to the list
         documents_data.append(topics_dict)
+    # Convert documents_data to a dictionary with 'Code' as the key
+    documents_dict = {doc['Code']: doc for doc in documents_data}    
 
     # Write the data to a JSON file
     with open('DataTextTopics.json', 'w', encoding='utf-8') as f:
         json.dump(documents_data, f, ensure_ascii=False, indent=4)
-    
-    # Merge function
-    def merge_Social_data(Social_data, documents_data):
-        for entry in Social_data:
-            # Merge with form A topics
-            code_a = entry.get('Code', '')
-            if code_a in documents_data:
-                entry.update(documents_data[code_a])
 
     # Ask the user to specify the master collection name
     master_collection_name = input("Please specify the collection name that you would like to merge the LDA results with. Note: collection must have a matching 'Code' column: ")
@@ -333,6 +326,14 @@ if __name__ == "__main__":
 
     # Load the documents from the collection into a Python list
     Social_data = list(collection.find())
+    
+    # Merge function.      
+    def merge_Social_data(Social_data, documents_dict):
+        for entry in Social_data:
+        # Merge with form A topics
+            code_a = entry.get('Code', '')
+            if code_a in documents_dict:
+                entry.update(documents_dict[code_a])
     
     # Social_data is already loaded from MongoDB
     merge_Social_data(Social_data, documents_data)
@@ -354,13 +355,13 @@ if __name__ == "__main__":
 
     # Assuming Social_data is your data loaded from MongoDB
     convert_id(Social_data) 
-
+    
     # Save the merged data to a JSON file
     with open('Merged_Social_Data.json', 'w') as file:
          json.dump(Social_data, file, indent=4)
 
     # Ask the user to specify the new collection name
-    new_collection_name = input("Please specify the new collection name to save the merged results: ")
+    new_collection_name = input("Please specify the new collection name to save the results: ")
 
     # Create a new collection (if it doesn't exist)
     new_collection = db[new_collection_name]
