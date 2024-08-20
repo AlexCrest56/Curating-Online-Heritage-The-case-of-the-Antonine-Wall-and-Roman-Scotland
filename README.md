@@ -2,6 +2,6 @@ User_Specified_LDA is a program for creating LDA topic models across different s
 
 There is also a program to sample LDA derived topics using cochrane's formula.
 
-The scrips run in python 3.8
+The scripts run in python 3.8
 
 In the future I will add step-by-step instructions on how to set up a google collab page, link this to a google drive and run the scripts from there.
