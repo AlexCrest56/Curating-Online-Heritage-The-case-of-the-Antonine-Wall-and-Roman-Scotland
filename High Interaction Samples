@@ -1,0 +1,39 @@
+# Load dplyr package
+library(dplyr)
+
+
+  df_name <- [name of existing dataframe]
+  
+  # Check if the dataframe exists to avoid errors
+  if (exists(df_name)) {
+    # Get the dataframe by its name
+    df <- get(df_name)
+    
+    # Calculate mean and standard deviation of InteractionScore
+    mean_interaction <- mean(df$InteractionScore, na.rm = TRUE)
+    sd_interaction <- sd(df$InteractionScore, na.rm = TRUE)
+    
+    # Calculate z-scores for each document in the InteractionScore column
+    df$ZScore <- (df$InteractionScore - mean_interaction) / sd_interaction
+    
+    # Set a z-score threshold to identify high-interaction documents
+    z_threshold <- 1.96  # 95% confidence level (top 2.5% interactions)
+    
+    # Filter the documents with a z-score above the threshold
+    df_significant <- subset(df, ZScore > z_threshold)
+    
+    # Remove all list-type columns
+    list_columns <- sapply(df_significant, is.list)
+    df_significant <- df_significant %>% select(-which(list_columns))
+    
+    # Save the significant subset as a CSV file without the list-type columns
+    csv_name <- paste0(df_name, "_significant.csv")
+    write.csv(df_significant, csv_name, row.names = FALSE)
+    
+    # Optional: Print a message indicating completion
+    print(paste("Saved significant interactions for", df_name, "as", csv_name))
+  } else {
+    print(paste("DataFrame", df_name, "does not exist. Skipping."))
+  }
+}
+
