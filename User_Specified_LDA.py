@@ -53,6 +53,7 @@ if __name__ == "__main__":
     import nltk
     nltk.download('stopwords')
     nltk.download('wordnet')
+    nltk.download('punkt_tab')
     from nltk.tokenize import word_tokenize
     nltk.download('punkt')
     from nltk.stem.wordnet import WordNetLemmatizer
@@ -151,7 +152,9 @@ if __name__ == "__main__":
 
     # Ask the user to specify the max_topics
     num_docs = len(data_texts)
+    recommended_minimum = max(2, num_docs // 1250)
     recommended_topics = 16 if num_docs <= 2000 else 31
+    min_topics = int(input(f"Please specify the minimum number of topics (recommended {recommended_minimum} for {num_docs} documents): "))
     max_topics = int(input(f"Please specify the maximum number of topics (recommended {recommended_topics} for {num_docs} documents): "))
 
     # Load the JSON file containing all texts
@@ -236,6 +239,12 @@ if __name__ == "__main__":
         print(f"Invalid input. Defaulting to suggested min_count: {suggested_min_count}.")
         min_count = suggested_min_count
 
+    # specify later outputs
+    master_collection_name = input("Please specify the collection name that you would like to merge the LDA results with. Note: collection must have a matching 'Code' column: ")
+
+    # Ask the user to specify the new collection name
+    new_collection_name = input("Please specify the new collection name to save the results: ")
+
     # Create n-grams
     texts = create_ngrams(texts, max_n=max_n, min_count=min_count)
          
@@ -254,8 +263,8 @@ if __name__ == "__main__":
 
     # Set up the list to hold coherence values for each topic:
     c_v = []
-    # Loop over to create models with 2 to 30 topics, and calculate coherence scores for it:
-    for num_topics in range(2, max_topics):
+    # Loop over to create models with min to max topics, and calculate coherence scores for it:
+    for num_topics in range(min_topics, max_topics):
         print(num_topics)
         lm = models.LdaMulticore(corpus=mm, num_topics=num_topics, id2word=dictionary, chunksize=9000, passes=100, eval_every=1, iterations=500, workers=4) # Create a model for num_topics topics
         print("Calculating coherence score...")
@@ -271,7 +280,7 @@ if __name__ == "__main__":
     with open(path2coherence, 'a') as csvFile:
         writer = csv.writer(csvFile)
         writer.writerow(["n_topics","coherence_score"])
-        i=2
+        i=min_topics 
         for score in c_v:
             print(i)
             writer.writerow([i,score])
@@ -321,7 +330,6 @@ if __name__ == "__main__":
         json.dump(documents_data, f, ensure_ascii=False, indent=4)
 
     # Ask the user to specify the master collection name
-    master_collection_name = input("Please specify the collection name that you would like to merge the LDA results with. Note: collection must have a matching 'Code' column: ")
     collection = db[master_collection_name]
 
     # Load the documents from the collection into a Python list
@@ -360,8 +368,6 @@ if __name__ == "__main__":
     with open('Merged_Social_Data.json', 'w') as file:
          json.dump(Social_data, file, indent=4)
 
-    # Ask the user to specify the new collection name
-    new_collection_name = input("Please specify the new collection name to save the results: ")
 
     # Create a new collection (if it doesn't exist)
     new_collection = db[new_collection_name]
