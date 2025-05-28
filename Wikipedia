@@ -1,0 +1,167 @@
+### The following script allows you to search for wikipedia articles and retrieve data from the platform. There a re three individual programs: 1) a basic search for title and previews of articles and talk pages; 2) a category search, which returns all articles within a category; 3) a full article earch, to retrieve text and image data from cateogories and save as jsons 4) functions to retrieve page views and monthly page views 
+
+library(httr)
+library(jsonlite)
+
+# Construct the search URL for 'Antonine Wall' # note: to search for other terms change "Antonine+Wall" in the below to your preffered term: "Hadrian+Wall", "Edinburgh+Castle" etc.
+search_url <- "https://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch=Antonine+Wall&utf8=&srlimit=max"
+
+# Send the GET request
+response <- GET(search_url, add_headers("User-Agent" = "MyApp/1.0"))
+
+# Parse the response to JSON
+content <- content(response, as = "text", encoding = "UTF-8")
+searchData <- fromJSON(content, flatten = TRUE)
+
+# Extract search results
+search_results <- searchData$query$search
+
+# Display search results
+search_results
+
+# Function to get talk page content
+get_talk_page_content <- function(title) {
+  talk_title <- paste0("Talk:", title)
+  url <- paste0("https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&titles=", URLencode(talk_title), "&exintro&explaintext")
+  response <- GET(url, add_headers("User-Agent" = "MyApp/1.0"))
+  content <- content(response, as = "text", encoding = "UTF-8")
+  jsonData <- fromJSON(content, flatten = TRUE)
+  pages <- jsonData$query$pages
+  talk_content <- pages[[1]]$extract
+  return(talk_content)
+}
+
+
+### Category
+
+# Construct the query URL for the category "Forts of the Antonine Wall"
+category_url <- "https://en.wikipedia.org/w/api.php?action=query&format=json&list=categorymembers&cmtitle=Category:Forts_of_the_Antonine_Wall&cmlimit=max"
+
+# Send the GET request
+response <- GET(category_url, add_headers("User-Agent" = "MyApp/1.0"))
+
+# Parse the response to JSON
+content <- content(response, as = "text", encoding = "UTF-8")
+categoryData <- fromJSON(content, flatten = TRUE)
+
+# Extract page titles
+category_members <- categoryData$query$categorymembers
+
+# Retrieve talk pages for each category member
+for (member in category_members) {
+  print(paste("Article:", member$title))
+  talk_content <- get_talk_page_content(member$title)
+  print("Talk Page Content:")
+  print(talk_content)
+  cat("\n--------------------\n")
+}
+
+
+### Retrieve full article text and images
+
+get_full_article_info <- function(title) {
+  # Fetch the full text
+  text_url <- paste0("https://en.wikipedia.org/w/api.php?action=query&format=json&prop=revisions&titles=", URLencode(title), "&rvslots=*&rvprop=content")
+  
+  text_response <- GET(text_url, add_headers("User-Agent" = "MyApp/1.0"))
+  text_content <- content(text_response, as = "text", encoding = "UTF-8")
+  text_data <- fromJSON(text_content, flatten = TRUE)
+  
+  # Fetch images
+  images_url <- paste0("https://en.wikipedia.org/w/api.php?action=query&format=json&prop=images&titles=", URLencode(title))
+  
+  images_response <- GET(images_url, add_headers("User-Agent" = "MyApp/1.0"))
+  images_content <- content(images_response, as = "text", encoding = "UTF-8")
+  images_data <- fromJSON(images_content, flatten = TRUE)
+  
+  list(full_text = text_data, images = images_data)
+}
+
+# Example usage with category members
+for (i in 1:nrow(category_members)) {
+  title <- category_members$title[i]
+  article_info <- get_full_article_info(title)
+  
+  # Sanitize the article title for use as a file name
+  safe_title <- gsub("[^a-zA-Z0-9]", "_", title)
+  
+  # Convert article info to JSON
+  json_data <- toJSON(article_info, pretty = TRUE)
+  
+  # Write JSON data to a file
+  file_name <- paste0(safe_title, ".json")
+  write(json_data, file = file_name)
+}
+
+
+
+
+# Page Views
+# Function to get page views and metadata
+get_page_views_metadata <- function(title) {
+  # Get page views
+  views_url <- paste0("https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageviews&titles=", URLencode(title))
+  views_response <- GET(views_url, add_headers("User-Agent" = "MyApp/1.0"))
+  views_content <- content(views_response, as = "text", encoding = "UTF-8")
+  views_data <- fromJSON(views_content, flatten = TRUE)
+  views <- views_data$query$pages[[1]]$pageviews
+
+  # Get metadata
+  info_url <- paste0("https://en.wikipedia.org/w/api.php?action=query&format=json&prop=info&titles=", URLencode(title))
+  info_response <- GET(info_url, add_headers("User-Agent" = "MyApp/1.0"))
+  info_content <- content(info_response, as = "text", encoding = "UTF-8")
+  info_data <- fromJSON(info_content, flatten = TRUE)
+  metadata <- info_data$query$pages[[1]]
+
+  list(views = views, metadata = metadata)
+}
+
+
+
+
+
+
+
+# Function to get monthly page views
+get_monthly_page_views <- function(title, start_date, end_date) {
+  # Create the URL for monthly page views
+  views_url <- paste0(
+    "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/all-agents/",
+    URLencode(title), "/monthly/", start_date, "/", end_date
+  )
+  
+  views_response <- GET(views_url, add_headers("User-Agent" = "MyApp/1.0"))
+  views_content <- content(views_response, as = "text", encoding = "UTF-8")
+  views_data <- fromJSON(views_content, flatten = TRUE)
+  
+  if (!is.null(views_data$items)) {
+    return(views_data$items)
+  } else {
+    return(NULL)
+  }
+}
+
+# Construct the query URL for the category "Forts of the Antonine Wall"
+category_url <- "https://en.wikipedia.org/w/api.php?action=query&format=json&list=categorymembers&cmtitle=Category:Forts_of_the_Antonine_Wall&cmlimit=max"
+
+# Send the GET request
+response <- GET(category_url, add_headers("User-Agent" = "MyApp/1.0"))
+
+# Parse the response
+content <- content(response, as = "text", encoding = "UTF-8")
+categoryData <- fromJSON(content, flatten = TRUE)
+
+# Extract page titles
+category_members <- categoryData$query$categorymembers
+
+# Define time period for page views (format: YYYYMMDD)
+start_date <- "20230601"
+end_date <- "20240601"
+
+# Retrieve monthly page views for each category member
+for (member in category_members) {
+  print(paste("Article:", member$title))
+  monthly_views <- get_monthly_page_views(member$title, start_date, end_date)
+  print(monthly_views)
+  cat("\n--------------------\n")
+}
