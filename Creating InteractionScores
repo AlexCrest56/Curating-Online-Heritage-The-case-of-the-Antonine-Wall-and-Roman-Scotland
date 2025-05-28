@@ -1,1 +1,15 @@
+### Sript for Calculating an 'Interaction Score', a statistical measure of the percentage of a specific metric from social media data against the whole corpus and represents this as a decimal.
+# The below uses Youtube data and views as the metric for interactions, but is adaptable for other datasets such as totals for Facebook Reacts (Like, Love, Anger, etc.) or X Likes.
+# Assuming the data.frame containing data is called "Youtube", formatted with data from Youtube Data API V3 (Available here: https://developers.google.com/youtube/v3)
 
+# Calculate total interaction metrics
+Total_views <- sum(Youtube$viewCount, na.rm = TRUE)
+
+# Calculate InteractionScore for each row
+Youtube <- Youtube %>%
+  mutate(InteractionScore = (viewCount / Total_views))
+
+Youtubejson <- toJSON(Youtube, pretty = TRUE)
+
+# Save the JSON data to a file
+write(Youtubejson, file = "Youtube.json")
