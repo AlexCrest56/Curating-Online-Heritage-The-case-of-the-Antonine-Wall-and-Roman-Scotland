@@ -117,11 +117,6 @@ get_page_views_metadata <- function(title) {
 }
 
 
-
-
-
-
-
 # Function to get monthly page views
 get_monthly_page_views <- function(title, start_date, end_date) {
   # Create the URL for monthly page views
