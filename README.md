@@ -1,4 +1,4 @@
-The Digital Heritage Toolkit
+The Online Heritage Toolkit
 
 A toolkit specifically designed to assist in collecting, processing and producing value insights from digital heritage data.
 
