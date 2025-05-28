@@ -1,0 +1,32 @@
+# Script for conducting sentiment analysis and attaching sentiment scores to a corpus using Vader (Hutto, Gilbert, 2014). 
+# Requires a json file with a 'Text' column containing strings.
+
+import json
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+
+# Initialise the sentiment analyser
+analyzer = SentimentIntensityAnalyzer()
+file_path = input("Enter the file path: ")
+
+# Fetch all documents from the original collection
+with open(file_path, 'r') as file:
+    documents = list(json.load(file))
+
+# Perform sentiment analysis and add results to each document
+for doc in documents:
+    text = doc.get("Text", "")
+    sentiment_scores = analyzer.polarity_scores(text)
+    doc["sentiment_scores"] = sentiment_scores  
+
+# Save documents to a new JSON file with sentiment scores
+new_file_path = f"{file_path}_sentiment.json"
+with open(new_file_path, 'w') as file:
+    json.dump(documents, file, default=str, indent=4)
+
+print("Sentiment analysis complete and new collections uploaded.")
+
+
+##References
+# Hutto, C. J., & Gilbert, E. E. (2014). VADER: A parsimonious rule-based model for sentiment analysis of social media text. Eighth International Conference on Weblogs and Social Media (ICWSM-14).
+
+
