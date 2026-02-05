@@ -4,17 +4,33 @@ A toolkit specifically designed to assist in collecting, processing and producin
 
 You will find walk throughs on how to collect data from sources such as social media. There are also scripts for programs for various forms of analyses and guides on how to read them. 
 
-Topics include:
+The topics are divided into three fields:
 
-Transcribing and translating Video and Audio data
+Monitoring
 
-Processing Text data
+  - Transcribing and Translating Video and Audio data
 
-Downloading and Anonymising user profiles and user names in texts.
+  - Processing Text data
 
-Topic Modelling 
+  - Downloading and anonymising user profiles and user names in texts
 
-Sentiment Analysis Tools and their Utility
+  - Topic Modelling 
+
+  - Sentiment Analysis Tools and their Utility
+
+Creation
+
+- Open data
+
+- Media production
+
+- Interpretation
+
+- Platform participation
+
+Communitee Curation
+
+- Maintenance of relationships rather than objects
 
 This repository is currently under construction. For any queries, please contact Alex Crest @ s2442997@ed.ac.uk with the subject line 'Toolkit Query - '
 
