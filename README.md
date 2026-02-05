@@ -10,7 +10,7 @@ Monitoring
 
   - Transcribing and Translating Video and Audio data
 
-  - Processing Text data
+  - Prerocessing Text data for text analysis
 
   - Downloading and anonymising user profiles and user names in texts
 
