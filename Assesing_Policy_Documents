@@ -1,0 +1,274 @@
+
+# ============================================
+# PDF -> text + split into numbered headings (supports nested: 4, 4.1, 4.1.1)
+# Then TF-IDF keywords per section
+# ============================================
+import re
+import fitz  # PyMuPDF
+import pandas as pd
+from pathlib import Path
+from tqdm import tqdm
+from sklearn.feature_extraction.text import TfidfVectorizer
+import argparse
+
+def extract_text_pymupdf(pdf_path: Path) -> str:
+    doc = fitz.open(str(pdf_path))
+    pages = [page.get_text("text") for page in doc]
+    doc.close()
+    return "\n".join(pages)
+
+def clean_text(text: str) -> str:
+    text = text.replace("\u00ad", "")  # soft hyphen
+    text = re.sub(r"-\s*\n\s*", "", text)  # de-hyphenate line breaks
+    text = re.sub(r"[ \t]{2,}", " ", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+def slugify(s: str, max_len: int = 80) -> str:
+    s = s.strip()
+    s = re.sub(r"[^\w\s.-]", "", s)
+    s = re.sub(r"\s+", "_", s)
+    return s[:max_len].strip("_")
+
+# Heading detection:
+# - Matches "1 INTRODUCTION", "1. Introduction", "4.1 Methods", "4.1.1 Sample"
+# - Allows optional trailing dot after the number chain
+HEADING_RE = re.compile(
+    r"^\s*((?:\d+\s*\.\s*)+\d+|\d+\s*\.)\s+(.+?)\s*$"
+)
+# Matches headings that are ONLY the number (with at least one dot), e.g. "2." or "2.1" or "2.1.1"
+HEADING_NUM_ONLY_RE = re.compile(
+    r"^\s*((?:\d+\s*\.\s*)+\d+|\d+\s*\.)\s*$"
+)
+
+
+def looks_like_heading(line: str) -> bool:
+    """
+    Heuristics to reduce false positives:
+    - must match nested numbering pattern
+    - title length not too long
+    - not mostly numeric noise
+    """
+    m = HEADING_RE.match(line)
+    if not m:
+        return False
+
+    num, title = m.group(1), m.group(2)
+    if len(title) < 2 or len(title) > 120:
+        return False
+
+    # Avoid lines that are basically just numbers / page artifacts
+    if re.fullmatch(r"[\d\W_]+", title.strip()):
+        return False
+
+    # Many reports use all-caps headings; but allow Title Case too.
+    # We'll accept either:
+    is_all_capsish = sum(c.isalpha() for c in title) >= 3 and title.upper() == title
+    is_titleish = bool(re.search(r"[A-Za-z]", title))
+
+    return is_all_capsish or is_titleish
+
+def split_into_numbered_sections(text: str):
+    lines = text.splitlines()
+
+    sections = []
+    current = {"number": "0", "title": "Preface", "heading": "0 Preface", "content_lines": []}
+
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+
+        # Case A: normal one-line heading like "2.1 Background"
+        if looks_like_heading(line):
+            content = "\n".join(current["content_lines"]).strip()
+            sections.append({
+                "number": current["number"],
+                "title": current["title"],
+                "heading": current["heading"],
+                "content": content
+            })
+
+            m = HEADING_RE.match(line)
+            num = re.sub(r"\s+", "", m.group(1)).rstrip(".")
+            title = m.group(2).strip()
+            current = {"number": num, "title": title, "heading": f"{num} {title}", "content_lines": []}
+            i += 1
+            continue
+
+        # Case B: number-only line like "2.1" then title on next line
+        m2 = HEADING_NUM_ONLY_RE.match(line)
+        if m2 and i + 1 < len(lines):
+            next_line = lines[i + 1].strip()
+            if next_line:
+                content = "\n".join(current["content_lines"]).strip()
+                sections.append({
+                    "number": current["number"],
+                    "title": current["title"],
+                    "heading": current["heading"],
+                    "content": content
+                })
+
+                num = re.sub(r"\s+", "", m2.group(1)).rstrip(".")
+                title = next_line
+                current = {"number": num, "title": title, "heading": f"{num} {title}", "content_lines": []}
+                i += 2
+                continue
+
+        # Otherwise, it's content
+        current["content_lines"].append(line)
+        i += 1
+
+    # close last (OUTSIDE the while loop)
+    content = "\n".join(current["content_lines"]).strip()
+    sections.append({
+        "number": current["number"],
+        "title": current["title"],
+        "heading": current["heading"],
+        "content": content
+    })
+
+    # drop empty sections (except preface if you want to keep it)
+    cleaned = []
+    for s in sections:
+        if s["number"] == "0" or len(s["content"]) >= 100:
+            cleaned.append(s)
+
+    return cleaned
+
+
+def tfidf_keywords_single_doc(text: str, top_n: int = 30, ngram_range=(1,3), min_df=2, max_df=0.9):
+    """
+    TF-IDF for a single document by chunking into paragraphs.
+    """
+    chunks = [c.strip() for c in re.split(r"\n\s*\n", text) if len(c.strip()) >= 100]
+    if len(chunks) < 3:
+        chunks = [c.strip() for c in re.split(r"(?<=[.!?])\s+", text) if len(c.strip()) >= 100]
+
+    if len(chunks) < 1:
+        # too little text
+        return []
+
+    vectorizer = TfidfVectorizer(
+        stop_words="english",
+        ngram_range=ngram_range,
+        min_df=min_df,
+        max_df=max_df,
+        lowercase=True
+    )
+    X = vectorizer.fit_transform(chunks)
+    scores = X.mean(axis=0).A1
+    terms = vectorizer.get_feature_names_out()
+
+    ranked = sorted(zip(terms, scores), key=lambda x: x[1], reverse=True)
+    return ranked[:top_n]
+
+def write_csv(path: Path, rows, cols=("term_or_phrase","score")):
+    df = pd.DataFrame(rows, columns=list(cols))
+    df.to_csv(path, index=False)
+
+def process_pdf(pdf_path: Path, output_base: Path, top_n: int = 30):
+    stem = pdf_path.stem
+    out_dir = output_base / f"{stem}_TA_Results"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    raw = extract_text_pymupdf(pdf_path)
+    text = clean_text(raw)
+
+    # Save full extracted text
+    (out_dir / f"{stem}.txt").write_text(text, encoding="utf-8")
+
+    # Split into sections
+    sections = split_into_numbered_sections(text)
+
+    # Save section index
+    sec_index = pd.DataFrame([{
+        "section_number": s["number"],
+        "section_title": s["title"],
+        "heading": s["heading"],
+        "content_chars": len(s["content"])
+    } for s in sections])
+    sec_index.to_csv(out_dir / f"{stem}.sections_index.csv", index=False)
+
+    # Whole-doc keywords
+    whole_ranked = tfidf_keywords_single_doc(text, top_n=top_n, ngram_range=(1,3), min_df=2, max_df=0.9)
+    write_csv(out_dir / f"{stem}.tfidf_whole.csv", whole_ranked)
+
+    # Per-section keywords
+    sec_out_dir = out_dir / "sections"
+    sec_out_dir.mkdir(parents=True, exist_ok=True)
+
+    summary_rows = []
+    for s in sections:
+        content = s["content"]
+        if len(content) < 400:  # skip tiny sections
+            continue
+
+        ranked = tfidf_keywords_single_doc(content, top_n=top_n, ngram_range=(1,3), min_df=1, max_df=1.0)
+
+
+        safe_name = slugify(f"{s['number']}_{s['title']}")
+        csv_path = sec_out_dir / f"{safe_name}.tfidf.csv"
+        write_csv(csv_path, ranked)
+
+        # keep top 10 for a single summary table
+        for term, score in ranked[:10]:
+            summary_rows.append({
+                "section_number": s["number"],
+                "section_title": s["title"],
+                "term_or_phrase": term,
+                "score": score
+            })
+
+    pd.DataFrame(summary_rows).to_csv(out_dir / f"{stem}.tfidf_sections_top10_summary.csv", index=False)
+
+    return out_dir, len(sections)
+
+def list_pdfs(input_dir: Path):
+    return sorted([p for p in input_dir.glob("*.pdf") if p.is_file()])
+
+import argparse
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input_dir", required=True, help="Folder containing PDF files")
+    parser.add_argument("--output_dir", required=True, help="Folder to write results into")
+    parser.add_argument("--top", type=int, default=40, help="Top N terms per section")
+    args = parser.parse_args()
+
+    input_dir = Path(args.input_dir).expanduser().resolve()
+    output_dir = Path(args.output_dir).expanduser().resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # More robust PDF discovery (handles .pdf and .PDF, and subfolders)
+    pdfs = sorted([p for p in input_dir.rglob("*") if p.is_file() and p.suffix.lower() == ".pdf"])
+
+    total = len(pdfs)
+    print(f"[INFO] input_dir:  {input_dir}")
+    print(f"[INFO] output_dir: {output_dir}")
+    print(f"[INFO] PDFs found:  {total}")
+    if total:
+        print("[INFO] First PDF:", pdfs[0].name)
+
+    if total == 0:
+        print("[ERROR] No PDFs found. Check that --input_dir is correct and contains PDFs.")
+        return
+
+    # One loop: progress + completion marker
+    for i, pdf in enumerate(pdfs, start=1):
+        print(f"[{i}/{total}] Processing: {pdf.name}")
+
+        out_dir, n_sections = process_pdf(pdf, output_dir, top_n=args.top)
+
+        done_file = out_dir / "_DONE.txt"
+        done_file.write_text(
+            f"Completed: {pdf.name}\nSections detected: {n_sections}\n",
+            encoding="utf-8"
+        )
+
+        print(f"[{i}/{total}] DONE: {pdf.name} -> {out_dir} (sections: {n_sections})")
+
+
+
+
+if __name__ == "__main__":
+    main()
